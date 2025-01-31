@@ -1,0 +1,76 @@
+REPORT ZPR_DEMOALE6
+
+TYPES: BEGIN OF gty_datos
+		codung TYPE zprde_codung,
+		codcar TYPE zprde_codcar,
+		codemp TYPE zprde_codemp,
+		nomemp TYPE zprde_nomemp,
+		fecing TYPE zprde_fecing,
+		stsemp TYPE zprde_stsemp,
+	END OF gty_datos,
+
+	BEGIN OF gty_ung,
+
+		codung TYPE zprde_codung,
+		desung TYPE zprde_desung,
+
+	END OF gty_ung.
+
+
+DATA: gt_datos TYPE STANDARD TABLE OF gty_datos,
+      gs_datos TYPE gty_datos.
+
+DATA: gt_ung TYPE STANDARD TABLE OF gty_ung,
+      gs_ung TYPE gty_ung.
+
+* Leemos datos de empleados
+
+SELECT
+	codung
+	codcar
+	codemp
+	nomemp
+	fecing
+	stsemp
+  INTO TABLE gt_datos
+  FROM zprtb_emp.
+
+  IF NOT gt_datos || IS INITIAL.
+	SELECT
+	  codung
+	  desung
+	INTO TABLE gt_ung
+	FROM zprtb_ung
+	FOR ALL ENTRIES IN gt_datos
+	WHERE codung EQ gt_datos-codung.
+
+
+* Procesamiento de datos
+
+SORT gt_datos BY codung codcar codemp.
+LOOP AT gt_datos INTO gs_datos.
+	AT NEW codung.
+
+* Recuperar datos de unidad de negocio
+	   CLEAR gs_ung.
+	   READ TABLE gt_ung INTO gs_ung
+		WITH KEY codung = gs_datos-codung.
+	   IF sy-subrc = 0.
+		WRITE:/ 'Unidad de Negocio',
+			gs_datos-codung.
+	ENDIF.
+	ENDAT.
+
+	AT NEW codcar.
+		WRITE:/ 'Cargo',
+			gs_datos-codcar.
+
+	WRITE:/ gs_datos-codemp,
+		gs_datos-codcar,
+		gs_datos-nomemp,
+		gs_datos-fecing,
+		gs_datos-stsemp.
+
+	AT END OF codung.
+	 SKIP.
+ENDLOOP.
